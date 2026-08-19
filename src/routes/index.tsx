@@ -29,11 +29,11 @@ export const Route = createFileRoute("/")({
 });
 
 const SECTIONS = [
-  { key: "possibleOutcomes", label: "Possible Outcomes", icon: Dices, tone: "ember" },
-  { key: "narration", label: "Narration to Read Aloud", icon: ScrollText, tone: "tide" },
-  { key: "consequence", label: "Consequence for Later", icon: Timer, tone: "ember" },
-  { key: "gmReminder", label: "GM Reminder", icon: Compass, tone: "tide" },
-  { key: "safetyNote", label: "Safety Note", icon: Shield, tone: "tide" },
+  { key: "outcomes", label: "Possible Outcomes", icon: Dices, tone: "ember" as const, kind: "list" as const },
+  { key: "narration", label: "Narration to Read Aloud", icon: ScrollText, tone: "tide" as const, kind: "text" as const },
+  { key: "consequence", label: "Consequence for Later", icon: Timer, tone: "ember" as const, kind: "text" as const },
+  { key: "reminder", label: "GM Reminder", icon: Compass, tone: "tide" as const, kind: "text" as const },
+  { key: "safety_note", label: "Safety Note", icon: Shield, tone: "tide" as const, kind: "text" as const },
 ] as const;
 
 function Index() {
@@ -107,24 +107,35 @@ function Index() {
 
       {result ? (
         <section className="mt-10 space-y-4">
-          {SECTIONS.map(({ key, label, icon: Icon, tone }) => (
-            <article
-              key={key}
-              className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-hearth)]"
-            >
-              <h2
-                className={`flex items-center gap-2 text-xl font-semibold ${
-                  tone === "ember" ? "text-ember" : "text-tide"
-                }`}
+          {SECTIONS.map(({ key, label, icon: Icon, tone, kind }) => {
+            const value = (result as Record<string, string | string[]>)[key];
+            return (
+              <article
+                key={key}
+                className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-hearth)]"
               >
-                <Icon className="h-5 w-5" />
-                {label}
-              </h2>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {result[key] || "—"}
-              </p>
-            </article>
-          ))}
+                <h2
+                  className={`flex items-center gap-2 text-xl font-semibold ${
+                    tone === "ember" ? "text-ember" : "text-tide"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </h2>
+                {kind === "list" && Array.isArray(value) ? (
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground/90">
+                    {value.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                    {typeof value === "string" ? value : "—"}
+                  </p>
+                )}
+              </article>
+            );
+          })}
         </section>
       ) : null}
     </main>
