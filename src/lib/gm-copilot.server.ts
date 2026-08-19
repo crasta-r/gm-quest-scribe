@@ -1,47 +1,28 @@
 // System prompt for GM Co-Pilot. Replace the body of DEFAULT_SYSTEM_PROMPT
 // with your own prompt at any time — nothing else needs to change.
-export const DEFAULT_SYSTEM_PROMPT = `You are the Quest Craft Game Master Co-Pilot, a tool that helps human Game Masters (educators, librarians, counselors, after-school staff) respond to unexpected player choices during live tabletop role-playing sessions for players roughly ages 8-14.
+export const DEFAULT_SYSTEM_PROMPT = `You are GM Co-Pilot for Quest Craft, an assistant for tabletop RPG Game Masters.
+A Game Master will describe an unexpected choice their players made mid-session.
+Respond fast, concretely, and in the GM's voice — no preamble, no meta commentary.
 
-Your ONLY job is: given a short description of an unexpected choice players just made, return supportive suggestions the GM can use, revise, or ignore. You never make the decision for the GM, and you never imply the players did something wrong.
+Always return five parts:
+1. Possible Outcomes — 3 short branching options, each with a likely consequence.
+2. Narration to Read Aloud — 2-4 sentences of evocative second-person narration the GM can read verbatim.
+3. Consequence for Later — one thread this choice should pay off in a future session.
+4. GM Reminder — one practical table-running tip for this moment (pacing, spotlight, rules call).
+5. Safety Note — a brief note on tone, content, or a check-in if the scene could touch sensitive ground; if nothing is risky, say so plainly.
 
-Respond with ONLY a JSON object, no markdown fences, no preamble, in exactly this shape:
-
-{
-  "outcomes": ["outcome 1 (1-2 sentences)", "outcome 2 (1-2 sentences)", "outcome 3 (1-2 sentences, optional)"],
-  "narration": "a short paragraph, 3-5 sentences max, that the GM could read aloud right now",
-  "consequence": "one concrete story thread or consequence for a future session - texture, not punishment",
-  "reminder": "one sentence reminding the GM they can accept, revise, or ignore this",
-  "safety_note": "one short sentence flagging anything relevant about age-appropriateness or tone"
-}
-
-Rules:
-- Total content must be readable at a live table in under 30 seconds.
-- Content must suit ages 8-14: no graphic violence, gore, real-world tragedy, or mature themes.
-- Treat mythology/folklore with respect. No mockery, no shallow stereotypes.
-- Treat the players' unexpected choice as legitimate storytelling, not a mistake to correct.
-- Never reference or request any real student's name or identifying information.
-- Offer genuine alternatives with different tones, not one "correct" path.
-- Output valid JSON only.`;
+Keep each section tight. No markdown headers inside the section text.`;
 
 export type CopilotSections = {
-  outcomes: string[];
+  possibleOutcomes: string;
   narration: string;
   consequence: string;
-  reminder: string;
-  safety_note: string;
+  gmReminder: string;
+  safetyNote: string;
 };
 
-const SCHEMA_INSTRUCTION = `Return ONLY a JSON object, no code fences, no preamble, in exactly this shape:
-
-{
-  "outcomes": ["outcome 1 (1-2 sentences)", "outcome 2 (1-2 sentences)", "outcome 3 (1-2 sentences, optional)"],
-  "narration": "a short paragraph, 3-5 sentences max, that the GM could read aloud right now",
-  "consequence": "one concrete story thread or consequence for a future session - texture, not punishment",
-  "reminder": "one sentence reminding the GM they can accept, revise, or ignore this",
-  "safety_note": "one short sentence flagging anything relevant about age-appropriateness or tone"
-}
-
-Output valid JSON only.`;
+const SCHEMA_INSTRUCTION = `Return ONLY a JSON object, no code fences, with exactly these string keys:
+"possibleOutcomes", "narration", "consequence", "gmReminder", "safetyNote".`;
 
 function extractJson(text: string): CopilotSections {
   const cleaned = text
@@ -52,17 +33,12 @@ function extractJson(text: string): CopilotSections {
   const end = cleaned.lastIndexOf("}");
   const slice = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
   const parsed = JSON.parse(slice) as Partial<CopilotSections>;
-
-  const outcomes = Array.isArray(parsed.outcomes)
-    ? parsed.outcomes.filter((o): o is string => typeof o === "string")
-    : [];
-
   return {
-    outcomes,
+    possibleOutcomes: parsed.possibleOutcomes ?? "",
     narration: parsed.narration ?? "",
     consequence: parsed.consequence ?? "",
-    reminder: parsed.reminder ?? "",
-    safety_note: parsed.safety_note ?? "",
+    gmReminder: parsed.gmReminder ?? "",
+    safetyNote: parsed.safetyNote ?? "",
   };
 }
 
@@ -106,11 +82,11 @@ export async function askAnthropic(situation: string): Promise<CopilotSections> 
     return extractJson(text);
   } catch {
     return {
-      outcomes: ["The AI returned an unexpected shape."],
-      narration: text,
+      possibleOutcomes: text,
+      narration: "",
       consequence: "",
-      reminder: "",
-      safety_note: "",
+      gmReminder: "",
+      safetyNote: "",
     };
   }
 }
