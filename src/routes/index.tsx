@@ -29,11 +29,11 @@ export const Route = createFileRoute("/")({
 });
 
 const SECTIONS = [
-  { key: "possibleOutcomes", label: "Possible Outcomes", icon: Dices, tone: "ember" },
+  { key: "outcomes", label: "Possible Outcomes", icon: Dices, tone: "ember" },
   { key: "narration", label: "Narration to Read Aloud", icon: ScrollText, tone: "tide" },
   { key: "consequence", label: "Consequence for Later", icon: Timer, tone: "ember" },
-  { key: "gmReminder", label: "GM Reminder", icon: Compass, tone: "tide" },
-  { key: "safetyNote", label: "Safety Note", icon: Shield, tone: "tide" },
+  { key: "reminder", label: "GM Reminder", icon: Compass, tone: "tide" },
+  { key: "safety_note", label: "Safety Note", icon: Shield, tone: "tide" },
 ] as const;
 
 function Index() {
@@ -77,7 +77,7 @@ function Index() {
           value={situation}
           onChange={(e) => setSituation(e.target.value)}
           rows={6}
-          placeholder="The rogue skipped the heist entirely and proposed marriage to the duchess in front of the whole court..."
+          placeholder="The players skipped the heist and decided to befriend the dragon instead..."
           className="mt-3 w-full resize-y rounded-xl border border-input bg-background/60 p-4 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
         />
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
@@ -107,24 +107,31 @@ function Index() {
 
       {result ? (
         <section className="mt-10 space-y-4">
-          {SECTIONS.map(({ key, label, icon: Icon, tone }) => (
-            <article
-              key={key}
-              className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-hearth)]"
-            >
-              <h2
-                className={`flex items-center gap-2 text-xl font-semibold ${
-                  tone === "ember" ? "text-ember" : "text-tide"
-                }`}
+          {SECTIONS.map(({ key, label, icon: Icon, tone }) => {
+            const raw = result[key];
+            const display =
+              key === "outcomes" && Array.isArray(raw)
+                ? raw.map((o, i) => `${i + 1}. ${o}`).join("\n")
+                : raw || "—";
+            return (
+              <article
+                key={key}
+                className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-hearth)]"
               >
-                <Icon className="h-5 w-5" />
-                {label}
-              </h2>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-                {result[key] || "—"}
-              </p>
-            </article>
-          ))}
+                <h2
+                  className={`flex items-center gap-2 text-xl font-semibold ${
+                    tone === "ember" ? "text-ember" : "text-tide"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </h2>
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                  {display}
+                </p>
+              </article>
+            );
+          })}
         </section>
       ) : null}
     </main>
